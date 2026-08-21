@@ -9,13 +9,18 @@ def fetch_safe(url):
     }
     try:
         response = tls_requests.get(url, impersonate="chrome120", headers=headers, timeout=10)
-        print(f"DEBUG: Status HTTP dla {url} -> {response.status_code}")
+        print(f"DEBUG: URL -> {url} | Status HTTP: {response.status_code}")
         
         if response.status_code == 200:
-            return response.json()
+            try:
+                return response.json()
+            except Exception as json_err:
+                # Jeśli Cloudflare zwróciło HTML zamiast JSON, zobaczysz to w logach Cloud Run!
+                print(f"DEBUG BŁĄD JSON: Nie udało się sparsować odpowiedzi. Początek treści: {response.text[:200]}")
+                return None
         else:
-            print(f"DEBUG: Zablokowano lub błąd! Treść: {response.text[:150]}")
+            print(f"DEBUG BŁĄD HTTP: Status {response.status_code}. Treść: {response.text[:200]}")
             return None
     except Exception as e:
-        print(f"DEBUG: Wyjątek podczas pobierania API: {str(e)}")
+        print(f"DEBUG WYJĄTEK SIECIOWY: {str(e)}")
         return None
